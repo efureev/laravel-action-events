@@ -119,3 +119,7 @@ $dataModel = User::create([]);
 $dataModel->fill(['name'=>'test']);
 $modelEvent = app('actionEvents')->pushAndSaveByModelUpdate($dataModel);
 ```
+
+### Roadmap
+
+- Work with Collections
