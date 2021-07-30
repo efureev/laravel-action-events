@@ -403,7 +403,7 @@ class ManagerPushingTest extends AbstractTestCase
         $staffModels->add(new Login());
 
         /** @var \Illuminate\Support\Collection $model */
-        $models = $this->pusher->pushByCollectionCreate($staffModels);
+        $models = $this->pusher->pushCollectionCreate($staffModels);
 
         static::assertCount(12, $models);
         static::assertCount(12, $user->madeActions);

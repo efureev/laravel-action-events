@@ -83,7 +83,7 @@ final class ActionLogger
      *
      * @wip
      */
-    public function pushByCollectionCreate(Collection $collection, \Closure $dataFilter = null): Collection
+    public function pushCollectionCreate(Collection $collection, \Closure $dataFilter = null): Collection
     {
         $threadId = ActionEvent::buildTread();
 

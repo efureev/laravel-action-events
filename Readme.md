@@ -124,7 +124,7 @@ Log collections
 
 ```php
 $staffModels = new Collection([Model::create(),'test', new Login(),Model::create()]);
-$models = app('actionEvents')->pushByCollectionCreate($staffModels);
+$models = app('actionEvents')->pushCollectionCreate($staffModels);
 ```
 
 ### Roadmap
