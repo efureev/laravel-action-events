@@ -1,0 +1,11 @@
+.php_cs.cache
+.DS_Store
+
+/.idea
+/storage
+/vendor
+composer.lock
+.phpunit.result.cache
+phpunit.xml.dist
+clover.xml
+coverage
