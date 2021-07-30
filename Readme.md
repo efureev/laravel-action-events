@@ -69,7 +69,7 @@ $attributes = [
 // ...
 ];
 $dataModel = User::create($attributes);
-$modelEvent = $this->pusher->pushByModelCreate($dataModel);
+$modelEvent = app('actionEvents')->pushByModelCreate($dataModel);
 ```
 
 Log data change from Laravel Model: update
@@ -81,7 +81,7 @@ $attributes1 = [
 $dataModel = User::create([]);
 $dataModel->fill(['name'=>'test']);
 
-$modelEvent = $this->pusher->pushByModelUpdate($dataModel);
+$modelEvent = app('actionEvents')->pushByModelUpdate($dataModel);
 $dataModel->save();
 ```
 
@@ -96,7 +96,7 @@ $dataModel->fill(['name'=>'test']);
 $changes = $dataModel->getDirty();
 $dataModel->save();
 
-$modelEvent = $this->pusher->pushByModelUpdate($dataModel, $changes);
+$modelEvent = app('actionEvents')->pushByModelUpdate($dataModel, $changes);
 ```
 
 Log data change from Laravel Model with transaction: create
@@ -106,7 +106,7 @@ $attributes1 = [
 // ...
 ];
 $dataModel = User::create([]);
-$modelEvent = $this->pusher->pushAndSaveByModelCreate($dataModel);
+$modelEvent = app('actionEvents')->pushAndSaveByModelCreate($dataModel);
 ```
 
 Log data change from Laravel Model with transaction: update
@@ -117,5 +117,5 @@ $attributes1 = [
 ];
 $dataModel = User::create([]);
 $dataModel->fill(['name'=>'test']);
-$modelEvent = $this->pusher->pushAndSaveByModelUpdate($dataModel);
+$modelEvent = app('actionEvents')->pushAndSaveByModelUpdate($dataModel);
 ```
