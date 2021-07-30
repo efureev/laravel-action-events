@@ -19,21 +19,23 @@ class MigrateTest extends AbstractTestCase
     public function testColumnInTable(): void
     {
         $columns = [
-            0  => 'id',
-            1  => 'thread_id',
-            2  => 'user_id',
-            3  => 'name',
-            4  => 'status',
-            5  => 'type',
-            6  => 'result',
-            7  => 'model_type',
-            8  => 'model_id',
-            9  => 'original',
-            10 => 'changes',
-            11 => 'actionable_type',
-            12 => 'actionable_id',
-            13 => 'created_at',
+            'id',
+            'thread_id',
+            'user_id',
+            'name',
+            'status',
+            'type',
+            'result',
+            'model_type',
+            'model_id',
+            'original',
+            'changes',
+            'extra',
+            'actionable_type',
+            'actionable_id',
+            'created_at',
         ];
+        
         $this->assertSameTable($columns, 'action_events');
     }
 

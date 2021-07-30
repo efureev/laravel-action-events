@@ -70,6 +70,9 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertNull($model->user_id);
         static::assertNotNull($model->created_at);
 
+        static::assertNull($model->actionable_type);
+        static::assertNull($model->actionable_id);
+
         static::assertCount(9, $model->toArray());
     }
 
@@ -92,8 +95,10 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertEquals(ActionEventStatus::DONE, $model->status);
         static::assertNotNull($model->user_id);
         static::assertNotNull($model->created_at);
+        static::assertEquals($dataModel::class, $model->actionable_type);
+        static::assertEquals($dataModel->id, $model->actionable_id);
 
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
     }
 
     public function testPushModelCreateWithCustomData(): void
@@ -125,7 +130,9 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertEquals($modelUser->id, $model->changes['id']);
         static::assertCount(5, $model->changes);
 
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
+        static::assertEquals($modelUser::class, $model->actionable_type);
+        static::assertEquals($modelUser->id, $model->actionable_id);
     }
 
     public function testPushModelCreateWithCallableData(): void
@@ -157,7 +164,9 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertEquals($modelUser->id, $model->changes['id']);
         static::assertCount(2, $model->changes);
 
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
+        static::assertEquals($modelUser::class, $model->actionable_type);
+        static::assertEquals($modelUser->id, $model->actionable_id);
     }
 
     public function testPushModelUpdate(): void
@@ -185,10 +194,12 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertNotNull($model->created_at);
         static::assertEquals($changeData, $model->changes);
         static::assertCount(count($changeData), $model->changes);
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
         static::assertCount(count($modelUser->getRawOriginal()), $model->original);
         static::assertEquals($modelUser->getRawOriginal('name'), $model->original['name']);
         static::assertEquals($modelUser->getOriginal('name'), $model->original['name']);
+        static::assertEquals($modelUser::class, $model->actionable_type);
+        static::assertEquals($modelUser->id, $model->actionable_id);
     }
 
     public function testPushModelUpdateWithCustomData(): void
@@ -227,7 +238,9 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertCount(count($modelUser->getRawOriginal()), $model->original);
         static::assertEquals($modelUser->getRawOriginal('name'), $model->original['name']);
         static::assertEquals($modelUser->getOriginal('name'), $model->original['name']);
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
+        static::assertEquals($modelUser::class, $model->actionable_type);
+        static::assertEquals($modelUser->id, $model->actionable_id);
     }
 
     public function testPushModelUpdateWithCallableData(): void
@@ -266,10 +279,12 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertTrue(isset($model->changes['original']));
 
         static::assertCount(3, $model->changes);
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
         static::assertCount(count($modelUser->getRawOriginal()), $model->original);
         static::assertEquals($modelUser->getRawOriginal('name'), $model->original['name']);
         static::assertEquals($modelUser->getOriginal('name'), $model->original['name']);
+        static::assertEquals($modelUser::class, $model->actionable_type);
+        static::assertEquals($modelUser->id, $model->actionable_id);
     }
 
 
@@ -296,13 +311,15 @@ class ManagerPushingTest extends AbstractTestCase
         unset($exp['email_verified_at'], $actual['email_verified_at']);
 
         static::assertEquals($exp, $actual);
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
+        static::assertEquals($modelUser::class, $model->actionable_type);
+        static::assertEquals($modelUser->id, $model->actionable_id);
     }
 
     public function testPushAndSaveByModelUpdate(): void
     {
         /** @var User $modelUser */
-        $modelUser  = UserFactory::new()->create();
+        $modelUser = UserFactory::new()->create();
         $this->be($modelUser);
 
         $changeData = [
@@ -310,8 +327,6 @@ class ManagerPushingTest extends AbstractTestCase
             'email' => 'test@test.tst',
         ];
         $modelUser->fill($changeData);
-
-
 
         /** @var ActionEventModel $model */
         $model = $this->pusher->pushAndSaveByModelUpdate($modelUser);
@@ -327,9 +342,44 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertNotNull($model->created_at);
         static::assertEquals($changeData, $model->changes);
         static::assertCount(count($changeData), $model->changes);
-        static::assertCount(9, $model->toArray());
+        static::assertCount(11, $model->toArray());
         static::assertCount(count($modelUser->getRawOriginal()), $model->original);
         static::assertEquals($modelUser->getRawOriginal('name'), $model->original['name']);
         static::assertEquals($modelUser->getOriginal('name'), $model->original['name']);
+        static::assertEquals($modelUser::class, $model->actionable_type);
+        static::assertEquals($modelUser->id, $model->actionable_id);
+    }
+
+
+    public function testPushModelCreateAndRelation(): void
+    {
+        /** @var User $dataModel */
+        $dataModel = UserFactory::new()->create();
+
+        $this->be($dataModel);
+
+        /** @var ActionEventModel $model */
+        $model = $this->pusher->pushByModelCreate($dataModel);
+
+        static::assertCount(1, $dataModel->madeActions);
+        static::assertEquals($model->id, $dataModel->madeActions->first()->id);
+
+        $this->pusher->pushAndSaveByModelCreate(UserFactory::new()->make());
+
+        static::assertCount(2, $dataModel->madeActions()->get());
+    }
+
+    public function testPushModelCreateAndUpdate(): void
+    {
+        /** @var User $dataModel */
+        $dataModel = UserFactory::new()->create();
+        $this->be($dataModel);
+
+        /** @var ActionEventModel $model */
+        $model = $this->pusher->pushByModelCreate($dataModel);
+        $dataModel->fill(['name' => 'Jack']);
+        $this->pusher->pushAndSaveByModelUpdate($dataModel);
+
+        static::assertCount(2, $dataModel->actions);
     }
 }

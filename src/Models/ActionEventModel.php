@@ -21,8 +21,11 @@ use Sitesoft\Alice\Casts\MetaCasts;
  * @property array $result
  * @property string $model_type
  * @property string $model_id
+ * @property string $actionable_type
+ * @property string $actionable_id
  * @property array $original
  * @property array $changes
+ * @property array $extra
  * @property Carbon $created_at
  */
 class ActionEventModel extends Model
@@ -37,6 +40,7 @@ class ActionEventModel extends Model
     protected $casts = [
         'original' => 'array',
         'changes'  => 'array',
+        'extra'    => 'array',
     ];
 
     public function getUpdatedAtColumn()

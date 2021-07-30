@@ -14,8 +14,8 @@ This package allows you to store various event actions: model changes, events, j
     - `Event` For any Events in system (Login success/failed)
     - `Read` For read data (Export data, etc)
 - Store an event with a model in one transaction
-- Has relations (through trait) to the Eloquent Models: `$model->actions`
-- Has relation (through trait) to author user: `$user->madeActions`
+- Has relations (through trait: `HasActions`) to the Eloquent Models: `$model->actions`
+- Has relation (through trait: `MadeActions`) to author user: `$user->madeActions`
 - Has statuses: `Done`, `Running`, `Failed`
 
 ## Examples

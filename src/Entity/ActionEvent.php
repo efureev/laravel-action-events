@@ -13,6 +13,10 @@ class ActionEvent extends AbstractActionEvent
 {
     protected string $status = ActionEventStatus::DONE;
 
+    protected array $extra = [];
+
+    protected ?Model $model = null;
+
     public function __construct(
         protected string $name,
         protected string $type = ActionEventType::CHANGE
@@ -45,7 +49,10 @@ class ActionEvent extends AbstractActionEvent
             $data instanceof Closure => $data($model->getRawOriginal()),
         };
 
-        return (new static('Create'))->setChangedData($change);
+        return (new static('Create'))
+            ->setModel($model)
+            ->setChangedData($change)
+            ->setExtraData(static::resolveExtraClass($model, $change));
     }
 
     public static function makeByModelUpdate(Model $model, array|Closure $data = null): ActionEventable
@@ -56,7 +63,33 @@ class ActionEvent extends AbstractActionEvent
             $data instanceof Closure => $data($model->getDirty(), $model->getRawOriginal()),
         };
 
-        return (new static('Update'))->setChangedData($change)->setOriginalData($model->getRawOriginal());
+        return (new static('Update'))
+            ->setModel($model)
+            ->setChangedData($change)
+            ->setOriginalData($model->getRawOriginal())
+            ->setExtraData(static::resolveExtraClass($model, $change));
+    }
+
+    protected static function resolveExtraClass(Model|string $model, $change): ?array
+    {
+        $cls = method_exists($model, 'resolveActionEventExtraClass')
+            ? $model::resolveActionEventExtraClass()
+            : null;
+
+        if (!$cls) {
+            return null;
+        }
+
+        if (is_callable($cls)) {
+            return $cls($change);
+        }
+
+        // if (class_exists($cls) && is_subclass_of($cls, ModelActionEvenExtrable::class)) {
+        if (class_exists($cls) && method_exists($cls, 'toArray')) {
+            return (new $cls($change))->toArray();
+        }
+
+        return null;
     }
 
     public function toArray(): array
@@ -65,6 +98,15 @@ class ActionEvent extends AbstractActionEvent
 
         if ($this->user) {
             $data['user_id'] = $this->getUserId();
+        }
+
+        if ($this->model) {
+            $data['actionable_type'] = $this->model->getMorphClass();
+            $data['actionable_id']   = $this->model->getKey();
+        }
+
+        if ($this->extra) {
+            $data['extra'] = $this->extra;
         }
 
         return array_merge($data, parent::toArray());
@@ -125,5 +167,19 @@ class ActionEvent extends AbstractActionEvent
     public function getStatus(): string
     {
         return $this->status;
+    }
+
+    public function setModel(Model $model): static
+    {
+        $this->model = $model;
+
+        return $this;
+    }
+
+    public function setExtraData(?array $data): static
+    {
+        $this->extra = $data ?? [];
+
+        return $this;
     }
 }

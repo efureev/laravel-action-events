@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fureev\ActionEvents\Tests\Entity\Models;
 
+use Fureev\ActionEvents\HasActions;
 use Fureev\ActionEvents\MadeActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -23,6 +24,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class User extends Authenticatable
 {
     use MadeActions;
+    use HasActions;
 
     protected $keyType = 'string';
     /**

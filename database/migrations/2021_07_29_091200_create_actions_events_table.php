@@ -36,20 +36,15 @@ class CreateActionsEventsTable extends Migration
 
                 $table->jsonb('original')->nullable();
                 $table->jsonb('changes')->nullable();
+                $table->jsonb('extra')->nullable();
 
                 static::resolveMorphColumn($table, 'actionable');
 
                 $table->timestamp('created_at');
 
                 /*
-                                $table->string('actionable_type');
-                                $table->string('actionable_id');
                                 $table->string('target_type');
                                 $table->string('target_id');
-                                $table->jsonb('meta')->nullable();
-
-
-                                $table->index(['actionable_type', 'actionable_id']);
                 */
 
                 $table->index(['thread_id', 'model_type', 'model_id']);
