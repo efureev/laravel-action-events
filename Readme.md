@@ -120,6 +120,13 @@ $dataModel->fill(['name'=>'test']);
 $modelEvent = app('actionEvents')->pushAndSaveByModelUpdate($dataModel);
 ```
 
+Log collections
+
+```php
+$staffModels = new Collection([Model::create(),'test', new Login(),Model::create()]);
+$models = app('actionEvents')->pushByCollectionCreate($staffModels);
+```
+
 ### Roadmap
 
 - Work with Collections

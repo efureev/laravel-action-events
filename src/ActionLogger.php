@@ -8,6 +8,7 @@ use Fureev\ActionEvents\Contracts\ActionEventable;
 use Fureev\ActionEvents\Entity\ActionEvent;
 use Fureev\ActionEvents\Models\ActionEventModel;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class ActionLogger
@@ -71,6 +72,31 @@ final class ActionLogger
 
                 return null;
             }
+        );
+    }
+
+    /**
+     * @param Collection $collection
+     * @param \Closure|null $dataFilter
+     *
+     * @return Collection
+     *
+     * @wip
+     */
+    public function pushByCollectionCreate(Collection $collection, \Closure $dataFilter = null): Collection
+    {
+        $threadId = ActionEvent::buildTread();
+
+        return $collection->each(
+            fn($model) => $this->push(
+                ($model instanceof Model
+                    ? ActionEvent::makeByModelCreate($model, $dataFilter)
+                    : ActionEvent::make($dataFilter ? $dataFilter($model) : $model)
+
+                )
+                    ->setThread($threadId)
+                    ->setUser(auth()->user())
+            )
         );
     }
 

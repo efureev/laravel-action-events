@@ -12,6 +12,8 @@ abstract class AbstractActionEvent implements ActionEventable
 {
     protected ?Authenticatable $user = null;
 
+    protected ?string $threadId = null;
+
     /** @var array|null Changed data */
     protected ?array $changedData = null;
 
@@ -55,6 +57,13 @@ abstract class AbstractActionEvent implements ActionEventable
         return $this;
     }
 
+    public function setThread(string $id): static
+    {
+        $this->threadId = $id;
+
+        return $this;
+    }
+
     public function toArray(): array
     {
         return [
@@ -62,13 +71,13 @@ abstract class AbstractActionEvent implements ActionEventable
             'user_id'   => $this->getUserId(),
             'type'      => $this->getType(),
             'status'    => $this->getStatus(),
-            'thread_id' => $this->buildTread(),
+            'thread_id' => $this->threadId ?? static::buildTread(),
             'changes'   => $this->getChangedData(),
             'original'  => $this->getOriginalData(),
         ];
     }
 
-    protected function buildTread(): string
+    public static function buildTread(): string
     {
         return (string)Str::orderedUuid();
     }

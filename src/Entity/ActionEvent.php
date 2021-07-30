@@ -8,6 +8,7 @@ use Closure;
 use Fureev\ActionEvents\Contracts\Actionable;
 use Fureev\ActionEvents\Contracts\ActionEventable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class ActionEvent extends AbstractActionEvent
 {
@@ -65,31 +66,40 @@ class ActionEvent extends AbstractActionEvent
 
         return (new static('Update'))
             ->setModel($model)
-            ->setChangedData($change)
+            ->setChangedData(static::resolveMapClass($model, $change))
             ->setOriginalData($model->getRawOriginal())
             ->setExtraData(static::resolveExtraClass($model, $change));
     }
 
+    protected static function resolveMapClass(Model|string $model, $change): ?array
+    {
+        return static::resolveClassInModel($model, 'resolveActionEventMapClass', $change, $change);
+    }
+
     protected static function resolveExtraClass(Model|string $model, $change): ?array
     {
-        $cls = method_exists($model, 'resolveActionEventExtraClass')
-            ? $model::resolveActionEventExtraClass()
+        return static::resolveClassInModel($model, 'resolveActionEventExtraClass', $change);
+    }
+
+    protected static function resolveClassInModel(Model|string $model, string $fn, $change, $default = null): ?array
+    {
+        $cls = method_exists($model, $fn)
+            ? $model::$fn()
             : null;
 
         if (!$cls) {
-            return null;
+            return $default;
         }
 
         if (is_callable($cls)) {
             return $cls($change);
         }
 
-        // if (class_exists($cls) && is_subclass_of($cls, ModelActionEvenExtrable::class)) {
         if (class_exists($cls) && method_exists($cls, 'toArray')) {
             return (new $cls($change))->toArray();
         }
 
-        return null;
+        return $default;
     }
 
     public function toArray(): array

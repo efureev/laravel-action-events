@@ -8,8 +8,12 @@ use Fureev\ActionEvents\Entity\ActionEvent;
 use Fureev\ActionEvents\Entity\ActionEventStatus;
 use Fureev\ActionEvents\Entity\ActionEventType;
 use Fureev\ActionEvents\Models\ActionEventModel;
+use Fureev\ActionEvents\Tests\Database\Factories\StuffFactory;
 use Fureev\ActionEvents\Tests\Database\Factories\UserFactory;
+use Fureev\ActionEvents\Tests\Entity\Events\Login;
+use Fureev\ActionEvents\Tests\Entity\Models\Stuff;
 use Fureev\ActionEvents\Tests\Entity\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Ramsey\Uuid\Uuid;
 
 class ManagerPushingTest extends AbstractTestCase
@@ -97,7 +101,6 @@ class ManagerPushingTest extends AbstractTestCase
         static::assertNotNull($model->created_at);
         static::assertEquals($dataModel::class, $model->actionable_type);
         static::assertEquals($dataModel->id, $model->actionable_id);
-
         static::assertCount(11, $model->toArray());
     }
 
@@ -371,15 +374,38 @@ class ManagerPushingTest extends AbstractTestCase
 
     public function testPushModelCreateAndUpdate(): void
     {
-        /** @var User $dataModel */
-        $dataModel = UserFactory::new()->create();
-        $this->be($dataModel);
+        /** @var User $user */
+        $user = UserFactory::new()->create();
+        $this->be($user);
+
+        /** @var Stuff $staff */
+        $staff = StuffFactory::new()->create();
 
         /** @var ActionEventModel $model */
-        $model = $this->pusher->pushByModelCreate($dataModel);
-        $dataModel->fill(['name' => 'Jack']);
-        $this->pusher->pushAndSaveByModelUpdate($dataModel);
+        $model = $this->pusher->pushByModelCreate($staff);
 
-        static::assertCount(2, $dataModel->actions);
+        $staff->fill(['name' => 'Jack']);
+        $this->pusher->pushAndSaveByModelUpdate($staff);
+
+        static::assertCount(2, $staff->actions);
+    }
+
+
+    public function testPushModelCollection(): void
+    {
+        /** @var User $user */
+        $user = UserFactory::new()->create();
+        $this->be($user);
+
+        /** @var Collection $staffModels */
+        $staffModels = StuffFactory::times(10)->create();
+        $staffModels->add('time');
+        $staffModels->add(new Login());
+
+        /** @var \Illuminate\Support\Collection $model */
+        $models = $this->pusher->pushByCollectionCreate($staffModels);
+
+        static::assertCount(12, $models);
+        static::assertCount(12, $user->madeActions);
     }
 }

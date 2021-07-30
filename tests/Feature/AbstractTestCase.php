@@ -11,6 +11,7 @@ abstract class AbstractTestCase extends \Fureev\ActionEvents\Tests\AbstractTestC
 
     protected array $migrations = [
         'tests/database/migrations/2021_07_03_110000_create_test_user_table.php',
+        'tests/database/migrations/2021_07_05_110000_create_test_stuff_table.php',
         'database/migrations/2021_07_29_091200_create_actions_events_table.php',
     ];
 
