@@ -2,7 +2,7 @@
 
 use Fureev\ActionEvents\Entity\ActionEventStatus;
 use Fureev\ActionEvents\Entity\ActionEventType;
-use Fureev\ActionEvents\Helpers\ConfigHelpers;
+use Fureev\ActionEvents\Helpers\ConfigHelper;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -49,7 +49,7 @@ class CreateActionsEventsTable extends Migration
     {
         $userColumnType = config('actionEvents.database.user_column_type', 'uuid');
 
-        ConfigHelpers::validateUserColumnType($userColumnType);
+        ConfigHelper::validateUserColumnType($userColumnType);
 
         $userColumnNullable = config('actionEvents.database.user_column_nullable', true);
         $table->addColumn($userColumnType, 'user_id')->nullable($userColumnNullable);
@@ -59,7 +59,7 @@ class CreateActionsEventsTable extends Migration
     {
         $userColumnType = config("actionEvents.database.{$name}_column_type", 'uuid');
 
-        ConfigHelpers::validateUserColumnType($userColumnType);
+        ConfigHelper::validateUserColumnType($userColumnType);
 
         $table->string("{$name}_type")->nullable();
 

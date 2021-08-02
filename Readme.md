@@ -120,13 +120,36 @@ $dataModel->fill(['name'=>'test']);
 $modelEvent = app('actionEvents')->pushAndSaveByModelUpdate($dataModel);
 ```
 
-Log collections
+### Work with collections
+
+Target-models & ActionEvent-models store in `pushCollectionCreate` or `pushCollectionUpdate` through transactions.
+
+Log collections: create
 
 ```php
-$staffModels = new Collection([Model::create(),'test', new Login(),Model::create()]);
+$staffModels = new Collection([Model::create(), Model::make(),'test', new Login(),Model::create()]);
 $models = app('actionEvents')->pushCollectionCreate($staffModels);
 ```
 
-### Roadmap
+If target-model have not created, it will be store before its logging to actionEvent store to define its ID.
 
-- Work with Collections
+Log collections: update
+
+```php
+$models = StuffFactory::times(10)->create();
+$models->each(fn(Stuff $model) => $model->setAttribute('name', $model->name . ' (updated)'));
+
+// add other item types to store
+$models->add('time');
+$models->add(new Login());
+
+$eventModels = app('actionEvents')->pushCollectionUpdate($models);
+```
+
+Log collections: delete
+
+```php
+$models = StuffFactory::times(10)->create();
+$models->delete();
+$eventModels = app('actionEvents')->pushCollectionDelete($models);
+```

@@ -7,6 +7,7 @@ namespace Fureev\ActionEvents\Entity;
 use Closure;
 use Fureev\ActionEvents\Contracts\Actionable;
 use Fureev\ActionEvents\Contracts\ActionEventable;
+use Fureev\ActionEvents\Helpers\ModelHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class ActionEvent extends AbstractActionEvent
@@ -68,6 +69,15 @@ class ActionEvent extends AbstractActionEvent
             ->setChangedData(static::resolveMapClass($model, $change))
             ->setOriginalData($model->getRawOriginal())
             ->setExtraData(static::resolveExtraClass($model, $change));
+    }
+
+    public static function makeByModelDelete(Model $model, ?string $name = null): ActionEventable
+    {
+        $name = $name ?? ModelHelper::hasSoftDelete($model) ? 'Soft Delete' : 'Delete';
+
+        return (new static($name))
+            ->setModel($model)
+            ->setOriginalData($model->getRawOriginal());
     }
 
     protected static function resolveMapClass(Model|string $model, $change): ?array

@@ -6,7 +6,7 @@ namespace Fureev\ActionEvents\Helpers;
 
 use Php\Support\Exceptions\ConfigException;
 
-final class ConfigHelpers
+final class ConfigHelper
 {
     /**
      * @throws ConfigException
