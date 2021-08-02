@@ -8,7 +8,6 @@ use Closure;
 use Fureev\ActionEvents\Contracts\Actionable;
 use Fureev\ActionEvents\Contracts\ActionEventable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 
 class ActionEvent extends AbstractActionEvent
 {
@@ -56,12 +55,12 @@ class ActionEvent extends AbstractActionEvent
             ->setExtraData(static::resolveExtraClass($model, $change));
     }
 
-    public static function makeByModelUpdate(Model $model, array|Closure $data = null): ActionEventable
+    public static function makeByModelUpdate(Model $model, array|Closure $dataFilter = null): ActionEventable
     {
         $change = match (true) {
-            null === $data => $model->getDirty(),
-            is_array($data) => $data,
-            $data instanceof Closure => $data($model->getDirty(), $model->getRawOriginal()),
+            null === $dataFilter => $model->getDirty(),
+            is_array($dataFilter) => $dataFilter,
+            $dataFilter instanceof Closure => $dataFilter($model->getDirty(), $model->getRawOriginal()),
         };
 
         return (new static('Update'))
@@ -111,8 +110,8 @@ class ActionEvent extends AbstractActionEvent
         }
 
         if ($this->model) {
-            $data['actionable_type'] = $this->model->getMorphClass();
-            $data['actionable_id']   = $this->model->getKey();
+            $data['target_type'] = $this->model->getMorphClass();
+            $data['target_id']   = $this->model->getKey();
         }
 
         if ($this->extra) {

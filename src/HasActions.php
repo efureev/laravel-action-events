@@ -22,6 +22,6 @@ trait HasActions
 {
     public function actions(): MorphMany
     {
-        return $this->morphMany(ActionLogger::model(), 'actionable');
+        return $this->morphMany(ActionLogger::model(), 'target');
     }
 }

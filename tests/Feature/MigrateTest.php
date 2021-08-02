@@ -26,16 +26,14 @@ class MigrateTest extends AbstractTestCase
             'status',
             'type',
             'result',
-            'model_type',
-            'model_id',
             'original',
             'changes',
             'extra',
-            'actionable_type',
-            'actionable_id',
+            'target_type',
+            'target_id',
             'created_at',
         ];
-        
+
         $this->assertSameTable($columns, 'action_events');
     }
 

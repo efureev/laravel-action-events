@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Fureev\ActionEvents\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
-use Sitesoft\Alice\Casts\MetaCasts;
 
 /**
  * Class ActionEventModel
@@ -19,14 +20,13 @@ use Sitesoft\Alice\Casts\MetaCasts;
  * @property string $status
  * @property string $type
  * @property array $result
- * @property string $model_type
- * @property string $model_id
- * @property string $actionable_type
- * @property string $actionable_id
+ * @property string $target_type
+ * @property string $target_id
  * @property array $original
  * @property array $changes
  * @property array $extra
  * @property Carbon $created_at
+ * @property Model|null $target
  */
 class ActionEventModel extends Model
 {
@@ -46,5 +46,31 @@ class ActionEventModel extends Model
     public function getUpdatedAtColumn()
     {
         return null;
+    }
+
+    /**
+     * Get the target of the action
+     *
+     * @return MorphTo
+     */
+    public function target(): MorphTo
+    {
+        return $this->morphTo('target', 'target_type', 'target_id')->withTrashed();
+    }
+
+
+    /**
+     * Get the collection of the actions with same thread
+     *
+     * @return Collection
+     */
+    public function getThread()
+    {
+        return $this->where('thread_id', $this->thread_id)->get();
+    }
+
+    public function isModel(): bool
+    {
+        return $this->target_type !== null && $this->target_id !== null;
     }
 }

@@ -19,8 +19,6 @@ class CreateActionsEventsTable extends Migration
     {
         DB::statement('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
 
-        $userColumnType = config('actionEvents.database.user_column_type', 'uuid');
-
         Schema::create(
             'action_events',
             static function (Blueprint $table) {
@@ -32,22 +30,17 @@ class CreateActionsEventsTable extends Migration
                 $table->enum('type', ActionEventType::TYPES)->nullable();
                 $table->jsonb('result')->nullable(); // exception, result...
 
-                static::resolveMorphColumn($table, 'model');
+                //                static::resolveMorphColumn($table, 'model');
 
                 $table->jsonb('original')->nullable();
                 $table->jsonb('changes')->nullable();
                 $table->jsonb('extra')->nullable();
 
-                static::resolveMorphColumn($table, 'actionable');
+                static::resolveMorphColumn($table, 'target');
 
                 $table->timestamp('created_at');
 
-                /*
-                                $table->string('target_type');
-                                $table->string('target_id');
-                */
-
-                $table->index(['thread_id', 'model_type', 'model_id']);
+                // $table->index(['thread_id', 'target_type', 'target_id']);
             }
         );
     }
@@ -64,7 +57,7 @@ class CreateActionsEventsTable extends Migration
 
     private static function resolveMorphColumn(Blueprint $table, string $name): void
     {
-        $userColumnType = config('actionEvents.database.user_column_type', 'uuid');
+        $userColumnType = config("actionEvents.database.{$name}_column_type", 'uuid');
 
         ConfigHelpers::validateUserColumnType($userColumnType);
 

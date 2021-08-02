@@ -7,6 +7,7 @@ namespace Fureev\ActionEvents;
 use Fureev\ActionEvents\Contracts\ActionEventable;
 use Fureev\ActionEvents\Entity\ActionEvent;
 use Fureev\ActionEvents\Models\ActionEventModel;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,19 @@ use Illuminate\Support\Facades\DB;
 final class ActionLogger
 {
     public static string $model = ActionEventModel::class;
+
+
+    public static function setModel(string $model): self
+    {
+        self::$model = $model;
+
+        return new self();
+    }
+
+    public static function model(): string
+    {
+        return self::$model;
+    }
 
     public function build(ActionEvent|string $event): ActionEventable
     {
@@ -34,25 +48,20 @@ final class ActionLogger
 
     public function pushByModelCreate(Model $model, array|\Closure $data = null): ?Model
     {
-        $event = ActionEvent::makeByModelCreate($model, $data)->setUser(auth()->user());
-
-        return $this->push($event);
+        return $this->push(ActionEvent::makeByModelCreate($model, $data)->setUser(auth()->user()));
     }
 
     public function pushByModelUpdate(Model $model, array|\Closure $data = null): ?Model
     {
-        $event = ActionEvent::makeByModelUpdate($model, $data)->setUser(auth()->user());
-
-        return $this->push($event);
+        return $this->push(ActionEvent::makeByModelUpdate($model, $data)->setUser(auth()->user()));
     }
 
-    public function pushAndSaveByModelCreate(Model $model, array|\Closure $data = null): ?Model
+    public function pushAndSaveByModelCreate(Model $model, array|\Closure $dataFilter = null): ?Model
     {
         return DB::transaction(
-            function () use ($model, $data) {
+            function () use ($model, $dataFilter) {
                 if ($model->save()) {
-                    $event = ActionEvent::makeByModelCreate($model, $data)->setUser(auth()->user());
-                    return $this->push($event);
+                    return $this->push(ActionEvent::makeByModelCreate($model, $dataFilter)->setUser(auth()->user()));
                 }
 
                 return null;
@@ -60,14 +69,13 @@ final class ActionLogger
         );
     }
 
-    public function pushAndSaveByModelUpdate(Model $model): ?Model
+    public function pushAndSaveByModelUpdate(Model $model, array|\Closure $dataFilter = null): ?Model
     {
         return DB::transaction(
-            function () use ($model) {
-                $changes = $model->getDirty();
+            function () use ($model, $dataFilter) {
+                $event = ActionEvent::makeByModelUpdate($model, $dataFilter);
                 if ($model->save()) {
-                    $event = ActionEvent::makeByModelUpdate($model, $changes)->setUser(auth()->user());
-                    return $this->push($event);
+                    return $this->push($event->setUser(auth()->user()));
                 }
 
                 return null;
@@ -79,36 +87,62 @@ final class ActionLogger
      * @param Collection $collection
      * @param \Closure|null $dataFilter
      *
-     * @return Collection
+     * @return EloquentCollection of ActionEvent models
      *
      * @wip
      */
-    public function pushCollectionCreate(Collection $collection, \Closure $dataFilter = null): Collection
+    public function pushCollectionCreate(Collection $collection, \Closure $dataFilter = null): EloquentCollection
     {
         $threadId = ActionEvent::buildTread();
+        $events   = new EloquentCollection();
 
-        return $collection->each(
-            fn($model) => $this->push(
-                ($model instanceof Model
-                    ? ActionEvent::makeByModelCreate($model, $dataFilter)
-                    : ActionEvent::make($dataFilter ? $dataFilter($model) : $model)
+        $collection->each(
+            fn($model) => $events->add(
+                $this->push(
+                    ($model instanceof Model
+                        ? ActionEvent::makeByModelCreate($model, $dataFilter)
+                        : ActionEvent::make($dataFilter ? $dataFilter($model) : $model)
 
+                    )
+                        ->setThread($threadId)
+                        ->setUser(auth()->user())
                 )
-                    ->setThread($threadId)
-                    ->setUser(auth()->user())
             )
         );
+
+        return $events;
     }
 
-    public static function setModel(string $model): self
+    /**
+     * @param Collection $collection of the models for change and saving
+     * @param \Closure|null $dataFilter
+     *
+     * @return EloquentCollection of ActionEvent models
+     */
+    public function pushCollectionUpdate(Collection $collection, \Closure $dataFilter = null): EloquentCollection
     {
-        self::$model = $model;
+        return DB::transaction(
+            function () use ($collection, $dataFilter) {
+                $threadId = ActionEvent::buildTread();
+                $events   = [];
 
-        return new self();
-    }
+                $collection->each(
+                    function ($model) use ($dataFilter, $threadId, &$events) {
+                        if ($model instanceof Model) {
+                            $event = ActionEvent::makeByModelUpdate($model, $dataFilter);
+                            if (!$model->save()) {
+                                return;
+                            }
+                        } else {
+                            $event = ActionEvent::make($dataFilter ? $dataFilter($model) : $model);
+                        }
 
-    public static function model(): string
-    {
-        return self::$model;
+                        $events[] = $this->push($event->setThread($threadId)->setUser(auth()->user()));
+                    }
+                );
+
+                return new EloquentCollection($events);
+            }
+        );
     }
 }
